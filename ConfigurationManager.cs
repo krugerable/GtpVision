@@ -2,32 +2,38 @@ using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 
+// This class is responsible for loading and managing configuration settings, including the OpenAI API key.
 public static class ConfigurationManager
 {
+    // Static instances are initialized in the static constructor
     private static readonly IConfiguration _configuration;
     private static readonly string _apiKey;
 
     static ConfigurationManager()
     {
-        // Load configuration from appsettings.json
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+        // Instantiate a ConfigurationBuilder
+        var builder = new ConfigurationBuilder();
 
+        // Set the base path to the current directory
+        builder.SetBasePath(Directory.GetCurrentDirectory());
+
+        // Add JSON file configuration source
+        builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+        // Build and instantiate the IConfiguration instance
         _configuration = builder.Build();
 
-        // Try to load the API key from the configuration first
+        // Load the API key from the configuration or environment variable
         _apiKey = _configuration["OpenAIApiKey"];
 
-        // If the configuration value is not set, load the API key from an environment variable
         if (string.IsNullOrEmpty(_apiKey))
         {
             _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
         }
 
-        // If the API key is still not available, throw an exception
         if (string.IsNullOrEmpty(_apiKey))
         {
+            // Instantiate a new Exception if the API key is not configured
             throw new Exception("API key is not configured.");
         }
     }
