@@ -1,28 +1,36 @@
 using System;
+using System.IO;
+using Microsoft.Extensions.Configuration;
 
 public static class ConfigurationManager
 {
+    private static readonly IConfiguration _configuration;
     private static readonly string _apiKey;
 
     static ConfigurationManager()
     {
-        // Try to load the API key from an environment variable first
-        _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        // Load configuration from appsettings.json
+        var builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
-        // If the environment variable is not set, load the API key from a configuration file
+        _configuration = builder.Build();
+
+        // Try to load the API key from the configuration first
+        _apiKey = _configuration["OpenAIApiKey"];
+
+        // If the configuration value is not set, load the API key from an environment variable
         if (string.IsNullOrEmpty(_apiKey))
         {
-            _apiKey = LoadApiKeyFromConfigFile();
+            _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+        }
+
+        // If the API key is still not available, throw an exception
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            throw new Exception("API key is not configured.");
         }
     }
 
     public static string ApiKey => _apiKey;
-
-    private static string LoadApiKeyFromConfigFile()
-    {
-        // Implement logic to load the API key from a configuration file
-        // For example, you could use a JSON file or an app.config/web.config file
-        // Return the loaded API key or throw an exception if it cannot be loaded
-        throw new NotImplementedException("API key loading from configuration file is not implemented.");
-    }
 }
