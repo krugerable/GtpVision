@@ -57,13 +57,42 @@ public class OpenAIVisionAPI
 
     private async Task<string> PostRequestAsync(string payload)
     {
+    try
+    {
         var content = new StringContent(payload, Encoding.UTF8, "application/json");
         httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
         var response = await httpClient.PostAsync(BaseUrl, content);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"Request failed with status code {response.StatusCode}: {errorContent}");
+        }
 
         var jsonResponse = await response.Content.ReadAsStringAsync();
         return jsonResponse;
     }
+    catch (HttpRequestException ex)
+    {
+        // Handle HTTP request exceptions
+        Console.WriteLine($"Error: {ex.Message}");
+        // Optionally, you can log the exception or take additional actions
+        throw;
+    }
+    catch (JsonException ex)
+    {
+        // Handle JSON parsing exceptions
+        Console.WriteLine($"Error: Failed to parse JSON response. {ex.Message}");
+        // Optionally, you can log the exception or take additional actions
+        throw;
+    }
+    catch (Exception ex)
+    {
+        // Handle other exceptions
+        Console.WriteLine($"Error: {ex.Message}");
+        // Optionally, you can log the exception or take additional actions
+        throw;
+    }
+}
 }
